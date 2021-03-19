@@ -1,7 +1,7 @@
 import numpy as np
 
-path = 'msl-images/msl_synset_words-indexed.txt'
+labpath = 'msl-images/msl_synset_words-indexed.txt'
 
-dat = np.genfromtxt(path, dtype=str, delimiter="  ", usecols=(0, -1))
-dat = np.char.strip(dat)
+labs = np.genfromtxt(labpath, dtype=str, delimiter="  ", usecols=(0, -1))
+labs = np.char.strip(labs)
 
