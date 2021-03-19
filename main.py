@@ -1,6 +1,7 @@
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+from collections import defaultdict, Counter
 
 
 def LoadDat(path, grayscale=False):
@@ -21,8 +22,8 @@ def LoadDat(path, grayscale=False):
     ot = np.genfromtxt(path, dtype=str)
     ot_paths = ot[:, 0]
     ot_Y = ot[:, 1]  # Training Labels
-    ot_X = []
 
+    ot_X = []
     for name in ot_paths:
         im = Image.open('msl-images/' + name).resize((256, 256), Image.ANTIALIAS).convert(mode=imcol)
         ar = np.array(im, dtype=dtypearr)
@@ -54,12 +55,14 @@ fig, ax = plt.subplots(3, 3, figsize=(10, 10))
 plt.suptitle('Test Data')
 np.random.seed(42)  # comment this line out for random seed
 
-
 for i in range(3):
     for j in range(3):
         x = np.random.randint(0, test_X.shape[0])
         ax[i, j].imshow(test_X[x])
         ax[i, j].set_title(label_meaning[int(test_Y[x]), 1])
         ax[i, j].axis('off')
-
 plt.show()
+
+# Class Imbalances
+class_imbalance = Counter(np.concatenate((train_Y, test_Y, val_Y)))
+class_imbalance = dict(sorted(class_imbalance.items(), key=lambda item: item[1], reverse=True))
