@@ -24,7 +24,7 @@ def LoadDat(path, grayscale=False):
 
     ot_X = []
     for name in ot_paths:
-        im = Image.open(f'"msl-images/" {name}').resize((256, 256), Image.ANTIALIAS).convert(mode=imcol)
+        im = Image.open(f'msl-images/{name}').resize((256, 256), Image.ANTIALIAS).convert(mode=imcol)
         ar = np.array(im, dtype=dtypearr)
         ot_X.append(ar)
 
