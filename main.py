@@ -3,7 +3,6 @@ from PIL import Image
 import matplotlib.pyplot as plt
 from collections import defaultdict, Counter
 
-
 def LoadDat(path, grayscale=False):
     """
     :param str path: path to the image from 'calibrated'. Function adds 'msl-images/'
@@ -25,12 +24,25 @@ def LoadDat(path, grayscale=False):
 
     ot_X = []
     for name in ot_paths:
-        im = Image.open('msl-images/' + name).resize((256, 256), Image.ANTIALIAS).convert(mode=imcol)
+        im = Image.open(f'"msl-images/" {name}').resize((256, 256), Image.ANTIALIAS).convert(mode=imcol)
         ar = np.array(im, dtype=dtypearr)
         ot_X.append(ar)
 
     ot_X = np.asarray(ot_X)
     return ot_X, ot_Y
+
+
+def plot_img(dataset, labels, title="Sample Data"):
+    fig, ax = plt.subplots(3, 3, figsize=(10, 10))
+    plt.suptitle(title)
+    np.random.seed(42)  # comment this line out for random seed
+    for i in range(3):
+        for j in range(3):
+            x = np.random.randint(0, dataset.shape[0])
+            ax[i, j].imshow(dataset[x])
+            ax[i, j].set_title(label_meaning[int(labels[x]), 1])
+            ax[i, j].axis('off')
+    plt.show()
 
 
 # Load the label defenitions. Note that column 1 matches the index.
@@ -51,17 +63,7 @@ test_path = 'msl-images/test-calibrated-shuffled.txt'
 test_X, test_Y = LoadDat(test_path)
 
 # Make Figure
-fig, ax = plt.subplots(3, 3, figsize=(10, 10))
-plt.suptitle('Test Data')
-np.random.seed(42)  # comment this line out for random seed
-
-for i in range(3):
-    for j in range(3):
-        x = np.random.randint(0, test_X.shape[0])
-        ax[i, j].imshow(test_X[x])
-        ax[i, j].set_title(label_meaning[int(test_Y[x]), 1])
-        ax[i, j].axis('off')
-plt.show()
+plot_img(test_X, test_Y, "Test Data")
 
 # Class Imbalances
 class_imbalance = Counter(np.concatenate((train_Y, test_Y, val_Y)))
