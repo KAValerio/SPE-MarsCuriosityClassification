@@ -1,10 +1,12 @@
 import numpy as np
+import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
+import seaborn as sns
 from collections import defaultdict, Counter
 
 
-def LoadDat(path, grayscale=False):
+def LoadData(path, grayscale=False):
     """
     :param str path: path to the image from 'calibrated'. Function adds 'msl-images/'
     :param bool grayscale: Set to true if images are to be gray-scaled
@@ -47,16 +49,18 @@ def plot_img(dataset, labels, title="Sample Data"):
     plt.show()
 
 
-def plot_bar(dataset, label, loc='left', relative=True):
-    dataset_dict = dict(Counter(dataset))
-    labels = [dict(label)[item] for item in dataset_dict.keys()]
-
+def plot_bar(dataset, label, loc='center', relative=True):
+    counter_dict = dict(Counter(dataset))
+    sorted_dict = dict(sorted(counter_dict.items(), key=lambda x: int(x[0])))
+    dataset_dict = dict(zip(list(dict(label).values()),
+                        list(sorted_dict.values())))
+    
     width = 0.25
     if loc == 'left':
-        n = -1
+        n = -0.2
     elif loc == 'right':
-        n = 1
-    elif loc == 'middle':
+        n = 0.2
+    elif loc == 'center':
         n = 0
 
     if relative:
@@ -65,19 +69,25 @@ def plot_bar(dataset, label, loc='left', relative=True):
         counts_dict.update(
             {n: round((100 * dataset_dict[n])/sum(dataset_dict.values()), 2) for n in dataset_dict.keys()})
         counts = list(counts_dict.values())
+        counts_df = pd.DataFrame.from_dict(counts_dict, orient='index').reset_index()
+        counts_df.columns = ['labels', 'count (%)']
         ylabel_text = '% count'
     else:
         # plot as counts
         counts = list(dataset_dict.values())
+        counts_df = pd.DataFrame.from_dict(dataset_dict, orient='index').reset_index()
+        counts_df.columns = ['labels', 'count']
         ylabel_text = 'count'
 
     xtemp = np.arange(len(dataset_dict.keys()))
 
-    plt.bar(xtemp + n*width, counts, align='center', alpha=.7, width=width)
-    plt.xticks(xtemp, labels, rotation=90)
+    plt.bar(xtemp + n, counts, align='center', alpha=.7, width=width) 
+    plt.xticks(xtemp + n, counts_df['labels'], rotation=90)
     plt.xlabel('Labels')
     plt.ylabel(ylabel_text)
-    plt.tick_params(axis='x', which='major', labelsize=10)
+    plt.tick_params(axis='x', labelsize=10)
+
+    return counts_df
 
 
 # Load the label defenitions. Note that column 1 matches the index.
@@ -88,15 +98,15 @@ label_meaning = np.char.strip(label_meaning)
 
 # Load the training data (Used for training models)
 train_path = 'msl-images/train-calibrated-shuffled.txt'
-train_X, train_Y = LoadDat(train_path)
+train_X, train_Y = LoadData(train_path)
 
 # Load the validation data (Used to compare models)
 val_path = 'msl-images/val-calibrated-shuffled.txt'
-val_X, val_Y = LoadDat(val_path)
+val_X, val_Y = LoadData(val_path)
 
 # Load the testing data (Used for testing the FINAL model)
 test_path = 'msl-images/test-calibrated-shuffled.txt'
-test_X, test_Y = LoadDat(test_path)
+test_X, test_Y = LoadData(test_path)
 
 # Show images (9 samples)
 plot_img(test_X, test_Y, "Test Data")
@@ -107,12 +117,21 @@ class_imbalance = dict(sorted(class_imbalance.items(),
                        key=lambda item: item[1], reverse=True))
 
 plt.figure(figsize=(20, 6))
-plot_bar(train_Y, label_meaning, loc="left", relative=True)
-plot_bar(test_Y, label_meaning, loc="right", relative=True)
-plot_bar(val_Y, label_meaning, loc="middle", relative=True)
+val_count = plot_bar(val_Y, label_meaning, loc="left", relative=True)
+test_count = plot_bar(test_Y, label_meaning, loc="right", relative=True)
+train_count = plot_bar(train_Y, label_meaning, loc="center", relative=True)
 plt.legend([
     'Train ({0} photos)'.format(sum(dict(Counter(train_Y)).values())),
     'Test ({0} photos)'.format(sum(dict(Counter(test_Y)).values())),
     'Validation ({0} photos)'.format(sum(dict(Counter(val_Y)).values()))
 ])
 plt.tight_layout()
+
+total_count = pd.merge(train_count, test_count,
+                        how='outer',
+                        on='labels',
+                        suffixes=('_train','_test')) \
+                .merge(val_count,
+                        how='outer',
+                        on='labels',
+                        suffixes=('_test','_val'))
