@@ -63,7 +63,7 @@ def plot_bar(dataset, label, loc='center', relative=True):
     elif loc == 'center':
         n = 0
 
-    if relative:
+    if relative == True:
         # plot as percentage
         counts_dict = dataset_dict.copy()
         counts_dict.update(
@@ -117,9 +117,9 @@ class_imbalance = dict(sorted(class_imbalance.items(),
                        key=lambda item: item[1], reverse=True))
 
 plt.figure(figsize=(20, 6))
-val_count = plot_bar(val_Y, label_meaning, loc="left", relative=True)
-test_count = plot_bar(test_Y, label_meaning, loc="right", relative=True)
-train_count = plot_bar(train_Y, label_meaning, loc="center", relative=True)
+val_count = plot_bar(val_Y, label_meaning, loc="left", relative=False)
+test_count = plot_bar(test_Y, label_meaning, loc="right", relative=False)
+train_count = plot_bar(train_Y, label_meaning, loc="center", relative=False)
 plt.legend([
     'Train ({0} photos)'.format(sum(dict(Counter(train_Y)).values())),
     'Test ({0} photos)'.format(sum(dict(Counter(test_Y)).values())),
