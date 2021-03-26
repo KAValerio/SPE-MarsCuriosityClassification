@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
-import seaborn as sns
 from collections import defaultdict, Counter
 
 
@@ -36,7 +35,7 @@ def LoadData(path, grayscale=False):
     return ot_X, ot_Y
 
 
-def plot_img(dataset, labels, title="Sample Data"):
+def plotImg(dataset, labels, title="Sample Data"):
     fig, ax = plt.subplots(3, 3, figsize=(10, 10))
     plt.suptitle(title)
     np.random.seed(42)  # comment this line out for random seed
@@ -49,12 +48,12 @@ def plot_img(dataset, labels, title="Sample Data"):
     plt.show()
 
 
-def plot_bar(dataset, label, loc='center', relative=True):
+def plotBar(dataset, label, loc='center', relative=True):
     counter_dict = dict(Counter(dataset))
     sorted_dict = dict(sorted(counter_dict.items(), key=lambda x: int(x[0])))
     dataset_dict = dict(zip(list(dict(label).values()),
                         list(sorted_dict.values())))
-    
+
     width = 0.25
     if loc == 'left':
         n = -0.2
@@ -69,21 +68,24 @@ def plot_bar(dataset, label, loc='center', relative=True):
         counts_dict.update(
             {n: round((100 * dataset_dict[n])/sum(dataset_dict.values()), 2) for n in dataset_dict.keys()})
         counts = list(counts_dict.values())
-        counts_df = pd.DataFrame.from_dict(counts_dict, orient='index').reset_index()
+        counts_df = pd.DataFrame.from_dict(
+            counts_dict, orient='index').reset_index()
         counts_df.columns = ['labels', 'count (%)']
         ylabel_text = '% count'
     else:
         # plot as counts
         counts = list(dataset_dict.values())
-        counts_df = pd.DataFrame.from_dict(dataset_dict, orient='index').reset_index()
+        counts_df = pd.DataFrame.from_dict(
+            dataset_dict, orient='index').reset_index()
         counts_df.columns = ['labels', 'count']
         ylabel_text = 'count'
 
     xtemp = np.arange(len(dataset_dict.keys()))
 
-    plt.bar(xtemp + n, counts, align='center', alpha=.7, width=width) 
+    plt.bar(xtemp + n, counts, align='center', alpha=.7, width=width)
     plt.xticks(xtemp + n, counts_df['labels'], rotation=90)
-    plt.xlabel('Labels')
+    plt.title('Class Imbalance', fontsize=14)
+    plt.xlabel('labels')
     plt.ylabel(ylabel_text)
     plt.tick_params(axis='x', labelsize=10)
 
@@ -109,17 +111,19 @@ test_path = 'msl-images/test-calibrated-shuffled.txt'
 test_X, test_Y = LoadData(test_path)
 
 # Show images (9 samples)
-plot_img(test_X, test_Y, "Test Data")
+plotImg(train_X, train_Y, "Train Data")
+plotImg(test_X, test_Y, "Test Data")
+plotImg(val_X, val_Y, "Validation Data")
 
 # Class Imbalances
 class_imbalance = Counter(np.concatenate((train_Y, test_Y, val_Y)))
 class_imbalance = dict(sorted(class_imbalance.items(),
                        key=lambda item: item[1], reverse=True))
 
-plt.figure(figsize=(20, 6))
-val_count = plot_bar(val_Y, label_meaning, loc="left", relative=False)
-test_count = plot_bar(test_Y, label_meaning, loc="right", relative=False)
-train_count = plot_bar(train_Y, label_meaning, loc="center", relative=False)
+plt.figure(figsize=(10, 6))
+val_count = plotBar(val_Y, label_meaning, loc="left", relative=False)
+test_count = plotBar(test_Y, label_meaning, loc="right", relative=False)
+train_count = plotBar(train_Y, label_meaning, loc="center", relative=False)
 plt.legend([
     'Train ({0} photos)'.format(sum(dict(Counter(train_Y)).values())),
     'Test ({0} photos)'.format(sum(dict(Counter(test_Y)).values())),
@@ -128,10 +132,10 @@ plt.legend([
 plt.tight_layout()
 
 total_count = pd.merge(train_count, test_count,
-                        how='outer',
-                        on='labels',
-                        suffixes=('_train','_test')) \
-                .merge(val_count,
-                        how='outer',
-                        on='labels',
-                        suffixes=('_test','_val'))
+                       how='outer',
+                       on='labels',
+                       suffixes=('_train', '_test')) \
+    .merge(val_count,
+           how='outer',
+           on='labels',
+           suffixes=('_test', '_val'))
