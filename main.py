@@ -38,7 +38,7 @@ def LoadData(path, grayscale=False):
 def plotImg(dataset, labels, title="Sample Data"):
     fig, ax = plt.subplots(3, 3, figsize=(10, 10))
     plt.suptitle(title)
-    np.random.seed(42)  # comment this line out for random seed
+    # np.random.seed(42)  # comment this line out for random seed
     for i in range(3):
         for j in range(3):
             x = np.random.randint(0, dataset.shape[0])
@@ -125,9 +125,9 @@ val_count = plotBar(val_Y, label_meaning, loc="left", relative=False)
 test_count = plotBar(test_Y, label_meaning, loc="right", relative=False)
 train_count = plotBar(train_Y, label_meaning, loc="center", relative=False)
 plt.legend([
-    'Train ({0} photos)'.format(sum(dict(Counter(train_Y)).values())),
+    'Validation ({0} photos)'.format(sum(dict(Counter(val_Y)).values())),
     'Test ({0} photos)'.format(sum(dict(Counter(test_Y)).values())),
-    'Validation ({0} photos)'.format(sum(dict(Counter(val_Y)).values()))
+    'Train ({0} photos)'.format(sum(dict(Counter(train_Y)).values()))
 ])
 plt.tight_layout()
 
