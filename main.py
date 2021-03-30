@@ -1,8 +1,9 @@
 import numpy as np
 import pandas as pd
-from PIL import Image
 import matplotlib.pyplot as plt
+from PIL import Image
 from collections import defaultdict, Counter
+from sklearn.ensemble import RandomForestClassifier
 
 
 def LoadData(path, grayscale=False):
@@ -92,6 +93,10 @@ def plotBar(dataset, label, loc='center', relative=True):
     return counts_df
 
 
+def imgToVector(image):
+    length, height, depth = image.shape
+    return image.reshape((length * height * depth, 1))
+
 # Load the label defenitions. Note that column 1 matches the index.
 lab_path = 'msl-images/msl_synset_words-indexed.txt'
 label_meaning = np.genfromtxt(
@@ -139,3 +144,8 @@ total_count = pd.merge(train_count, test_count,
            how='outer',
            on='labels',
            suffixes=('_test', '_val'))
+
+# Vectorize images
+train_X_vector = [imgToVector(image) for image in train_X]
+test_X_vector = [imgToVector(image) for image in test_X]
+val_X_vector = [imgToVector(image) for image in val_X]
