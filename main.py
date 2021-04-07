@@ -96,11 +96,11 @@ def plotBar(dataset, label, loc='center', relative=True):
 
 def imgToVector(image, grayscale=False):
     if grayscale == True:
-        length, height, depth = image.shape
-        return image.reshape((length * height * depth, 1))
-    else:
         length, height = image.shape
-        return image.reshape((length * height, 1))
+        return image.reshape((length * height, ))
+    else:
+        length, height, depth = image.shape
+        return image.reshape((length * height * depth, ))
 
 
 # Load the label defenitions. Note that column 1 matches the index.
@@ -158,7 +158,8 @@ val_X_vector = [imgToVector(image, grayscale=True) for image in val_X]
 
 # Models
 randomForest = RandomForestClassifier()
-randomForest.fit(train_X, train_Y)
+randomForest.fit(train_X_vector, train_Y)
 
 # Predictions
-Y_prediction = randomForest.predict(val_X)
+prediction_Y = randomForest.predict(val_X_vector)
+print("Accuracy:", round(accuracy_score(val_Y, prediction_Y), 2))
