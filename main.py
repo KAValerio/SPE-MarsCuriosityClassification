@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from PIL import Image
 from collections import defaultdict, Counter
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
 
 
 def LoadData(path, grayscale=False):
@@ -93,9 +94,14 @@ def plotBar(dataset, label, loc='center', relative=True):
     return counts_df
 
 
-def imgToVector(image):
-    length, height, depth = image.shape
-    return image.reshape((length * height * depth, 1))
+def imgToVector(image, grayscale=False):
+    if grayscale == True:
+        length, height, depth = image.shape
+        return image.reshape((length * height * depth, 1))
+    else:
+        length, height = image.shape
+        return image.reshape((length * height, 1))
+
 
 # Load the label defenitions. Note that column 1 matches the index.
 lab_path = 'msl-images/msl_synset_words-indexed.txt'
@@ -105,15 +111,15 @@ label_meaning = np.char.strip(label_meaning)
 
 # Load the training data (Used for training models)
 train_path = 'msl-images/train-calibrated-shuffled.txt'
-train_X, train_Y = LoadData(train_path)
+train_X, train_Y = LoadData(train_path, grayscale=True)
 
 # Load the validation data (Used to compare models)
 val_path = 'msl-images/val-calibrated-shuffled.txt'
-val_X, val_Y = LoadData(val_path)
+val_X, val_Y = LoadData(val_path, grayscale=True)
 
 # Load the testing data (Used for testing the FINAL model)
 test_path = 'msl-images/test-calibrated-shuffled.txt'
-test_X, test_Y = LoadData(test_path)
+test_X, test_Y = LoadData(test_path, grayscale=True)
 
 # Show images (9 samples)
 plotImg(train_X, train_Y, "Train Data")
@@ -146,6 +152,13 @@ total_count = pd.merge(train_count, test_count,
            suffixes=('_test', '_val'))
 
 # Vectorize images
-train_X_vector = [imgToVector(image) for image in train_X]
-test_X_vector = [imgToVector(image) for image in test_X]
-val_X_vector = [imgToVector(image) for image in val_X]
+train_X_vector = [imgToVector(image, grayscale=True) for image in train_X]
+test_X_vector = [imgToVector(image, grayscale=True) for image in test_X]
+val_X_vector = [imgToVector(image, grayscale=True) for image in val_X]
+
+# Models
+randomForest = RandomForestClassifier()
+randomForest.fit(train_X, train_Y)
+
+# Predictions
+Y_prediction = randomForest.predict(val_X)
