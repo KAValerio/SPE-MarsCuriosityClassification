@@ -5,7 +5,7 @@ from PIL import Image
 from collections import defaultdict, Counter
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import accuracy_score
-
+from sklearn.decomposition import PCA
 
 def LoadData(path, grayscale=False):
     """
@@ -103,7 +103,7 @@ def imgToVector(image, grayscale=False):
         return image.reshape((length * height * depth, ))
 
 
-# Load the label defenitions. Note that column 1 matches the index.
+# Load the label definitions. Note that column 1 matches the index.
 lab_path = 'msl-images/msl_synset_words-indexed.txt'
 label_meaning = np.genfromtxt(
     lab_path, dtype=str, delimiter="  ", usecols=(0, -1))
@@ -151,15 +151,30 @@ total_count = pd.merge(train_count, test_count,
            on='labels',
            suffixes=('_test', '_val'))
 
-# Vectorize images
-train_X_vector = [imgToVector(image, grayscale=True) for image in train_X]
-test_X_vector = [imgToVector(image, grayscale=True) for image in test_X]
-val_X_vector = [imgToVector(image, grayscale=True) for image in val_X]
+# Vectorized and normalized images
+train_X_1D = [np.around(imgToVector(image, grayscale=True)/255,2) for image in train_X]
+test_X_1D = [np.around(imgToVector(image, grayscale=True)/255,2) for image in test_X]
+val_X_1D = [np.around(imgToVector(image, grayscale=True)/255,2) for image in val_X]
 
-# Models
-randomForest = RandomForestClassifier()
-randomForest.fit(train_X_vector, train_Y)
+# Dimensionality reduction
+pca = PCA(n_components=2)
+pca.fit(train_X_1D)
+PCA_result = pca.transform(train_X_1D)
 
-# Predictions
-prediction_Y = randomForest.predict(val_X_vector)
-print("Accuracy:", round(accuracy_score(val_Y, prediction_Y), 2))
+# Plot PCA
+plt.figure(figsize = (16,8))
+sc = plt.scatter(PCA_result[:, 0], PCA_result[:, 1])
+plt.title('PCA Result', fontsize = 25)
+plt.xlabel('PCA 1', fontsize = 20)
+plt.ylabel('PCA 2', fontsize = 20)
+plt.grid()
+
+# # Models
+# randomForest = RandomForestClassifier()
+
+# # Trainings
+# randomForest.fit(train_X_1D, train_Y)
+
+# # Predictions
+# randomForestPrediction_Y = randomForest.predict(val_X_1D)
+# randomForestAccuracy = round(accuracy_score(val_Y, randomForestPrediction_Y), 2)
