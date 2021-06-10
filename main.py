@@ -109,17 +109,18 @@ label_meaning = np.genfromtxt(
     lab_path, dtype=str, delimiter="  ", usecols=(0, -1))
 label_meaning = np.char.strip(label_meaning)
 
+gs = False   # Grayscale
 # Load the training data (Used for training models)
 train_path = 'msl-images/train-calibrated-shuffled.txt'
-train_X, train_Y = LoadData(train_path, grayscale=True)
+train_X, train_Y = LoadData(train_path, grayscale=gs)
 
 # Load the validation data (Used to compare models)
 val_path = 'msl-images/val-calibrated-shuffled.txt'
-val_X, val_Y = LoadData(val_path, grayscale=True)
+val_X, val_Y = LoadData(val_path, grayscale=gs)
 
 # Load the testing data (Used for testing the FINAL model)
 test_path = 'msl-images/test-calibrated-shuffled.txt'
-test_X, test_Y = LoadData(test_path, grayscale=True)
+test_X, test_Y = LoadData(test_path, grayscale=gs)
 
 # Show images (9 samples)
 plotImg(train_X, train_Y, "Train Data")
@@ -152,14 +153,63 @@ total_count = pd.merge(train_count, test_count,
            suffixes=('_test', '_val'))
 
 # Vectorize images
-train_X_vector = [imgToVector(image, grayscale=True) for image in train_X]
-test_X_vector = [imgToVector(image, grayscale=True) for image in test_X]
-val_X_vector = [imgToVector(image, grayscale=True) for image in val_X]
+# train_X_vector = [imgToVector(image, grayscale=True) for image in train_X]
+# test_X_vector = [imgToVector(image, grayscale=True) for image in test_X]
+# val_X_vector = [imgToVector(image, grayscale=True) for image in val_X]
 
 # Models
-randomForest = RandomForestClassifier()
-randomForest.fit(train_X_vector, train_Y)
+#randomForest = RandomForestClassifier()
+#randomForest.fit(train_X_vector, train_Y)
 
 # Predictions
-prediction_Y = randomForest.predict(val_X_vector)
-print("Accuracy:", round(accuracy_score(val_Y, prediction_Y), 2))
+#prediction_Y = randomForest.predict(val_X_vector)
+#print("Accuracy:", round(accuracy_score(val_Y, prediction_Y), 2))
+
+
+from skimage.feature import hog
+from sklearn import metrics
+from sklearn.linear_model import SGDClassifier
+
+
+def doHOG(data, ppc=12, cpb=3, verbose=True):
+    hogs = []
+    hogimage = []
+    for i in range(data.shape[0]):
+        im = train_X[0]
+        h, him = hog(im, visualize=True,
+                     pixels_per_cell=(ppc, ppc),
+                     cells_per_block=(cpb, cpb),
+                     block_norm="L2-Hys")
+        hogs.append(h)
+        hogimage.append(him)
+        if verbose:
+            if i % round(data.shape[0] / 10) == 0:
+                print(f"    {round(i * 100 / data.shape[0])}%")
+    return hogs, hogimage
+
+ppc = 9  # HOG parameter (pixels per cell)
+cpb = 3  # HOG parameter (cells per block)
+print("Starting HOG (Training)")
+hogs_train, hogimage_train = doHOG(train_X, ppc=ppc, cpb=cpb)
+print("Starting HOG (Testing)")
+hogs_test, hogimage_test = doHOG(test_X, ppc=ppc, cpb=cpb)
+print("Starting HOG (Validation)")
+hogs_valid, hogimage_valid = doHOG(val_X, ppc=ppc, cpb=cpb)
+
+
+print("Model Creation")
+sgd_clf = SGDClassifier(max_iter=5000, tol=1e-5, penalty='elasticnet', n_jobs=-2, loss='squared_hinge', verbose=False)
+sgd_clf.fit(np.array(hogs_train), train_Y)
+print("Prediction")
+y_pred = sgd_clf.predict(np.array(hogs_test))
+print('Model Metrics:')
+print(metrics.classification_report(test_Y, y_pred))
+
+
+plt.figure()
+plt.imshow(hogimage_train[0])
+plt.show()
+
+plt.figure()
+plt.imshow(train_X[0])
+plt.show()
